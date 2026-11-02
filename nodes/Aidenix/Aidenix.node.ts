@@ -90,7 +90,7 @@ export class Aidenix implements INodeType {
 						name: 'Company People',
 						value: 'companyPeople',
 						description:
-							'The team of a company with the work addresses to reach them, ranked by who decides',
+							'The team of a company with the work addresses to reach them, ranked by who decides. Admin accounts only.',
 						action: 'Get the people of a company',
 					},
 					{
@@ -119,10 +119,16 @@ export class Aidenix implements INodeType {
 						action: 'List ICP profiles',
 					},
 					{
+						name: 'Person Search',
+						value: 'personSearch',
+						description:
+							'People by role, company and timing filters, with emails and phones. One request per person returned.',
+						action: 'Find people by filters',
+					},
+					{
 						name: 'Person Signals',
 						value: 'personSignals',
-						description:
-							'Who the person is, what they publish, where they are in their career',
+						description: 'Who the person is, what they publish, where they are in their career',
 						action: 'Profile a person',
 					},
 					{
@@ -203,7 +209,8 @@ export class Aidenix implements INodeType {
 				default: '',
 				required: true,
 				placeholder: 'example.com',
-				description: 'Domain, LinkedIn company URL/slug, or name. A company often has several LinkedIn pages — all of its own go into the slice.',
+				description:
+					'Domain, LinkedIn company URL/slug, or name. A company often has several LinkedIn pages — all of its own go into the slice.',
 				displayOptions: {
 					show: {
 						operation: ['companySignals', 'companyPeople'],
@@ -246,7 +253,7 @@ export class Aidenix implements INodeType {
 				required: true,
 				placeholder: 'one@company.com, two@company.com',
 				description:
-					'Addresses to assess, separated by commas or newlines. Up to 1000 per call.',
+					'Addresses to assess, separated by commas or newlines. Up to 50 per call, 10 with Deliverability or Enrich.',
 				displayOptions: {
 					show: {
 						operation: ['emailIntelBulk'],
@@ -260,8 +267,7 @@ export class Aidenix implements INodeType {
 				default: '',
 				required: true,
 				placeholder: 'jane@example.com, linkedin.com/in/john-doe',
-				description:
-					'Contacts to score, separated by commas or newlines. Up to 10000 per batch.',
+				description: 'Contacts to score, separated by commas or newlines. Up to 10000 per batch.',
 				displayOptions: {
 					show: {
 						operation: ['scoreList'],
@@ -302,11 +308,55 @@ export class Aidenix implements INodeType {
 				default: 50,
 				typeOptions: {
 					minValue: 1,
+					maxValue: 100,
 				},
 				description: 'Max number of results to return',
 				displayOptions: {
 					show: {
 						operation: ['batchResults'],
+					},
+				},
+			},
+			{
+				displayName: 'Filters (JSON)',
+				name: 'filters',
+				type: 'json',
+				default:
+					'{\n  "titles": ["vp sales"],\n  "countries": ["United States"],\n  "new_in_role_days": 90\n}',
+				required: true,
+				description:
+					'Combined with AND; values inside one list with OR. Keys: titles, levels, departments, decision_makers, countries, states, cities, skills, programming_languages, industries, company_size_min, company_size_max, company_countries, technologies, company_hiring, funded_since, founded_after, domains, companies, exclude_domains, new_in_role_days, past_companies, overdue_only, likes_posts_of, engages_with_topics.',
+				displayOptions: {
+					show: {
+						operation: ['personSearch'],
+					},
+				},
+			},
+			{
+				displayName: 'People per Page',
+				name: 'pageSize',
+				type: 'number',
+				default: 25,
+				typeOptions: {
+					minValue: 1,
+					maxValue: 100,
+				},
+				description: 'Each person returned costs one request of your quota',
+				displayOptions: {
+					show: {
+						operation: ['personSearch'],
+					},
+				},
+			},
+			{
+				displayName: 'Only With Contacts',
+				name: 'onlyWithContacts',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to skip people without any email or phone',
+				displayOptions: {
+					show: {
+						operation: ['personSearch'],
 					},
 				},
 			},
@@ -319,7 +369,7 @@ export class Aidenix implements INodeType {
 				description: 'The next_cursor of the previous page. Leave empty for the first page.',
 				displayOptions: {
 					show: {
-						operation: ['batchResults'],
+						operation: ['batchResults', 'personSearch'],
 					},
 				},
 			},
@@ -551,6 +601,48 @@ export class Aidenix implements INodeType {
 					url =
 						`${baseUrl}/api/company/people/${encodeURIComponent(company)}` +
 						(query ? `?${query}` : '');
+				} else if (operation === 'personSearch') {
+					const raw = this.getNodeParameter('filters', i, {}) as unknown;
+					let filters: IDataObject;
+					try {
+						filters = (typeof raw === 'string' ? JSON.parse(raw || '{}') : raw) as IDataObject;
+					} catch {
+						throw new NodeOperationError(
+							this.getNode(),
+							'The "Filters" parameter is not valid JSON.',
+							{
+								itemIndex: i,
+							},
+						);
+					}
+					if (!filters || typeof filters !== 'object' || !Object.keys(filters).length) {
+						throw new NodeOperationError(this.getNode(), 'Set at least one filter.', {
+							itemIndex: i,
+						});
+					}
+					method = 'POST';
+					url = `${baseUrl}/api/person/search`;
+					body = {
+						filters,
+						limit: this.getNodeParameter('pageSize', i, 25) as number,
+						only_with_contacts: flag('onlyWithContacts'),
+					};
+					// курсор страницы — массив; из выражения n8n он приходит строкой JSON
+					const rawCursor = this.getNodeParameter('cursor', i, '') as unknown;
+					if (Array.isArray(rawCursor)) body.cursor = rawCursor;
+					else if (typeof rawCursor === 'string' && rawCursor.trim()) {
+						try {
+							body.cursor = JSON.parse(rawCursor);
+						} catch {
+							throw new NodeOperationError(
+								this.getNode(),
+								'The "Cursor" parameter is not valid JSON.',
+								{
+									itemIndex: i,
+								},
+							);
+						}
+					}
 				} else if (operation === 'emailIntelBulk') {
 					const emails = list('emails');
 					if (!emails.length) {
