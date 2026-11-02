@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-aidenix",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Aidenix node for n8n — score a contact or a whole list against your ICP and write personalized outreach, check whether addresses are still worth contacting, profile the person and the company behind the lead, and manage ICP profiles, quota and opt-outs.",
 	"keywords": [
 		"n8n-community-node-package",
