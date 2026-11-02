@@ -23,10 +23,10 @@ function createContext(overrides: MockContextOverrides = {}) {
 		baseUrl: 'http://localhost:8080',
 		...overrides.credentials,
 	};
-	const items =
-		overrides.items?.map((json) => ({ json })) ?? [{ json: {} }];
-	const parameters =
-		overrides.parameters ?? [{ operation: 'businessFit', query: 'jane@example.com', options: {} }];
+	const items = overrides.items?.map((json) => ({ json })) ?? [{ json: {} }];
+	const parameters = overrides.parameters ?? [
+		{ operation: 'businessFit', query: 'jane@example.com', options: {} },
+	];
 
 	const httpRequest = overrides.httpRequest ?? jest.fn();
 	const node = { name: 'Aidenix', type: 'aidenix', typeVersion: 1 };
@@ -304,9 +304,7 @@ describe('Aidenix node — idempotency key strategies', () => {
 		const httpRequest1 = jest.fn().mockResolvedValue({});
 		const httpRequest2 = jest.fn().mockResolvedValue({});
 
-		const params = [
-			{ operation: 'businessFit', query: 'same@example.com', options: {} },
-		];
+		const params = [{ operation: 'businessFit', query: 'same@example.com', options: {} }];
 
 		const { ctx: ctxA } = createContext({
 			workflowId: 'wf-X',
@@ -441,7 +439,9 @@ describe('Aidenix node — intelligence layers', () => {
 		const request = httpRequest.mock.calls[0][0];
 		expect(request.method).toBe('GET');
 		// выключенный флаг — отсутствие параметра, а не deliverability=false
-		expect(request.url).toBe('http://localhost:8080/api/email/intel/jane%40example.com?enrich=true');
+		expect(request.url).toBe(
+			'http://localhost:8080/api/email/intel/jane%40example.com?enrich=true',
+		);
 		expect(request.headers['X-API-Token']).toBe('test-token');
 		expect(request.headers['Idempotency-Key']).toBeUndefined();
 		expect(result[0][0].json).toEqual({ verdict: 'current-likely' });
@@ -498,6 +498,45 @@ describe('Aidenix node — intelligence layers', () => {
 		expect(httpRequest.mock.calls[0][0].url).toBe(
 			'http://localhost:8080/api/company/people/lemlist.com?roles=founder%2Cceo&top=10',
 		);
+	});
+
+	it('posts person search filters, page size and cursor as a body', async () => {
+		const httpRequest = jest.fn().mockResolvedValue({ total: 1, people: [] });
+		const { ctx } = createContext({
+			parameters: [
+				{
+					operation: 'personSearch',
+					filters: '{"titles": ["cto"], "new_in_role_days": 90}',
+					pageSize: 50,
+					cursor: '[17.2, "abc"]',
+					onlyWithContacts: true,
+				},
+			],
+			httpRequest,
+		});
+
+		await run(ctx);
+
+		const call = httpRequest.mock.calls[0][0];
+		expect(call.method).toBe('POST');
+		expect(call.url).toBe('http://localhost:8080/api/person/search');
+		expect(call.body).toEqual({
+			filters: { titles: ['cto'], new_in_role_days: 90 },
+			limit: 50,
+			only_with_contacts: true,
+			cursor: [17.2, 'abc'],
+		});
+	});
+
+	it('refuses person search without filters before spending the request', async () => {
+		const httpRequest = jest.fn();
+		const { ctx } = createContext({
+			parameters: [{ operation: 'personSearch', filters: '{}' }],
+			httpRequest,
+		});
+
+		await expect(run(ctx)).rejects.toThrow(NodeOperationError);
+		expect(httpRequest).not.toHaveBeenCalled();
 	});
 
 	it('refuses an empty identifier before spending the request', async () => {
@@ -615,9 +654,7 @@ describe('Aidenix node — batches, account and ICP', () => {
 
 		const request = httpRequest.mock.calls[0][0];
 		expect(request.method).toBe('POST');
-		expect(request.url).toBe(
-			'http://localhost:8080/api/opt_out/add?contact=jane%40example.com',
-		);
+		expect(request.url).toBe('http://localhost:8080/api/opt_out/add?contact=jane%40example.com');
 	});
 
 	it('refuses an empty batch before spending the request', async () => {

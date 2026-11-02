@@ -155,6 +155,8 @@ Is the address worth contacting at all. Two independent questions — does the m
 
 Branch on `verdict` (`current-likely`, `former-person-moved`, `former-flagged-historic`, `domain-rebrand`, `personal-mailbox`, `ambiguous-generic-alias`, `unknown-not-in-data`, `uncertain`) or, more simply, on `recommendation.action` (`send`, `caution`, `verify`, `skip`).
 
+For `former-person-moved`, `person.new_work_emails` carries their work address at the new company when one is known from professional sources (about half of movers; not SMTP-checked).
+
 ### Person Signals
 
 Who the person is and what is going on with them: role and grade, the career trajectory from dates, what they publish themselves, whose content they read, and a verdict with the career moment and how to approach it. It works even when the address is dead, because the person is resolved to their current employer.
@@ -175,13 +177,28 @@ The account moment behind the lead: firmographics and revenue, team makeup, hiri
 | Relationships | boolean | No       | Expand the attention teaser into the full map: orgs the team follows, accounts influencing the buyer, internal amplifiers by role. |
 | Enrich        | boolean | No       | Add the model read of that map. Needs Relationships on; adds around 20 seconds.                   |
 
+### Person Search
+
+People who fit — by role, company and timing — with their contacts: name, title, company, LinkedIn, the work email at the current employer, all known work emails, personal emails and phones from professional sources, months in role and why they matched. Opted-out people are excluded. Each person returned costs one request; start with a small page to see the total, then pass `next_cursor` to continue.
+
+| Parameter          | Type    | Required | Description |
+| ------------------ | ------- | -------- | ----------- |
+| Filters (JSON)     | json    | Yes      | AND across keys, OR inside a list. Who: `titles`, `levels`, `departments`, `decision_makers`, `countries`, `states`, `cities`, `skills`, `programming_languages`. Where: `industries`, `company_size_min/max`, `company_countries`, `technologies`, `company_hiring`, `funded_since`, `founded_after`, `domains`, `companies`, `exclude_domains`. Timing: `new_in_role_days`, `past_companies`, `overdue_only`, `likes_posts_of`, `engages_with_topics`. |
+| People per Page    | number  | No       | 1–100, default 25. |
+| Cursor             | string  | No       | `next_cursor` of the previous page. |
+| Only With Contacts | boolean | No       | Skip people without any email or phone. |
+
+### Company People
+
+One company's team with the work addresses to reach them, ranked by who decides. **Admin accounts only** — other tokens get 403.
+
 ### Email Intel (Bulk)
 
 The same address check across a whole list in one call, so a list can be triaged before any analysis is spent on it. The slow layers apply per address, so a long list with Deliverability or Enrich on takes minutes.
 
 | Parameter      | Type    | Required | Description                                                     |
 | -------------- | ------- | -------- | --------------------------------------------------------------- |
-| Emails         | string  | Yes      | Addresses separated by commas or newlines. Up to 1000 per call. |
+| Emails         | string  | Yes      | Addresses separated by commas or newlines. Up to 50 per call, 10 with Deliverability or Enrich. |
 | Deliverability | boolean | No       | Add the SMTP layer to every address.                            |
 | Enrich         | boolean | No       | Add the dossier to every address.                               |
 
@@ -209,7 +226,7 @@ The analyses themselves, one page at a time. Feed `next_cursor` from the previou
 | Parameter | Type   | Required | Description                                     |
 | --------- | ------ | -------- | ----------------------------------------------- |
 | Batch ID  | string | Yes      | The ID returned by **Score a List**.            |
-| Limit     | number | No       | Results per page.                               |
+| Limit     | number | No       | Results per page, up to 100.                    |
 | Cursor    | string | No       | `next_cursor` of the previous page.             |
 
 ### Account Context
