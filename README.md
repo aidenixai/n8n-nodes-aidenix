@@ -4,9 +4,9 @@
 [![npm downloads](https://img.shields.io/npm/dm/n8n-nodes-aidenix.svg)](https://www.npmjs.com/package/n8n-nodes-aidenix)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE.md)
 
-An [n8n](https://n8n.io) community node for [Aidenix](https://aidenix.com) — score each lead against your ICP and write a personalized first email and LinkedIn message, in your brand's voice, from real research, in a single workflow step.
+An [n8n](https://n8n.io) community node for [Aidenix](https://aidenix.com) — B2B data on people and companies inside your workflow: find the people who fit, check whether an email is still worth sending to, and see the moment behind a person or a company. Lead scoring against your ICP with a drafted first message is there too.
 
-Drop in a LinkedIn slug or an email address. Aidenix researches the person across many data sources, scores fit against your ICP, and writes a first message that sounds like you wrote it for that one person — not a template with a name swapped in.
+Operations are grouped into five resources: **Person**, **Company**, **Email**, **Fit Scoring** and **Account**.
 
 ![Aidenix node — input parameters and the flat output it produces](./docs/screenshot1.png)
 
@@ -34,29 +34,27 @@ Drop in a LinkedIn slug or an email address. Aidenix researches the person acros
 
 ## Why Aidenix
 
-Real personalization is the hard part of outbound, and a single merge tag doesn't deliver it. A name and a title dropped into a template reads as mass-produced, and prospects ignore it.
+A work email can pass every verifier and still belong to someone who left — the server keeps the mailbox, or the domain accepts everything. Aidenix answers the questions a list actually needs before you send: is the person still there, and if not, where they went; who else at the company decides; what changed at the company lately.
 
-Aidenix does the whole job in one node: it researches each lead across many data sources, scores fit against your ICP, and writes the first message in your brand's voice — composed from your own positioning and the lead's real context, not a snippet pasted into a template. You keep your sending tool and your strategy; Aidenix produces the message.
+- **Input**: filters, a work email, a LinkedIn slug or a company domain
+- **Output**: people with work emails and phones, a verdict on the address, the career and company moment, and — if you want it — an ICP fit score with a drafted email
 
-- **Input**: `jane@acme.com` or `jane-doe-12345`
-- **Output**: fit score, person/company context, subject line, email body, LinkedIn DM, plus reasoning and Do/Don't guidance
-
-Open and licensed sources only — no traded PII, safe under GDPR and CCPA.
-
-Use it when you want genuinely personal first touches at scale, without building the research-and-writing pipeline yourself.
+Contacts come from professional sources only; leaked and consumer files are never used. Opted-out people are excluded.
 
 ## Features
 
-- **Business Fit** — pass a LinkedIn slug or email; get an ICP fit score (0–100), a researched person summary, and a ready-to-send email + LinkedIn message written in your brand's voice.
-- **Email Intel** — check an address before you spend an analysis on it: does the mailbox accept mail, and is the person still there.
-- **Person Signals** — the career moment behind the lead: months in the seat, what they publish themselves, when to reach them. Works even when the address is dead.
-- **Company Signals** — the account moment: hiring velocity from career dates, funding and product signals, and a growth / reorg / stealth / stable verdict with the timing.
-- **Lists** — assess addresses in bulk, score a whole batch of contacts, poll its status, and read the results page by page.
-- **Account & ICP** — quota and plan, the saved ICP profiles, building a profile from a website, and recording an opt-out.
-- **Built-in idempotency** — deterministic `Idempotency-Key` per item, so retried executions reuse the cached server response instead of paying for a duplicate AI run.
+- **Person → Search** — people by title, level, company, location and timing (new in role, left a company, overdue for a move), with work emails and phones. One request per person returned.
+- **Person → Signals** — the career moment: months in the seat, what they publish, when to reach them. Works even when the address is dead.
+- **Company → Signals** — hiring velocity, funding and product signals, a growth / reorg / stealth / stable verdict with the timing.
+- **Company → People** — the team with the work addresses to reach them, ranked by who decides (admin accounts).
+- **Email → Intel / Intel (Bulk)** — does the mailbox accept mail (catch-all aware), is the person still there, where they moved and their new work email.
+- **Fit Scoring** — an ICP fit score (0–100) with a researched summary and a first email + LinkedIn message; whole lists in batches; ICP profiles built from a website.
+- **Account** — plan and quota left, and recording an opt-out.
+- **Built-in idempotency** — deterministic `Idempotency-Key` per item, so retried executions reuse the cached server response instead of paying twice.
 - **Automatic retry** on `409 in_progress` (still computing) and `504 timeout`, with configurable backoff.
 - **Standard n8n error handling** via `NodeApiError`, with full **Continue On Fail** support.
-- **HTTPS-only by default**, with a runtime warning if a non-loopback Base URL is configured over plain HTTP.
+
+Workflows saved with earlier versions keep working: the operation is stored by name, and the resource only groups the menu.
 
 ## Prerequisites
 

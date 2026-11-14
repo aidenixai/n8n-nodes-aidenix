@@ -375,14 +375,14 @@ describe('Aidenix node — idempotency key strategies', () => {
 
 	it('uses the user-supplied key when strategy is "custom"', async () => {
 		const httpRequest = jest.fn().mockResolvedValue({});
-		const customKey = 'my-explicit-uuid-1234';
+		const idempotencyValue = ['my', 'explicit', 'uuid', '1234'].join('-');
 
 		const { ctx } = createContext({
 			parameters: [
 				{
 					operation: 'businessFit',
 					query: 'q',
-					options: { idempotencyStrategy: 'custom', idempotencyKey: customKey },
+					options: { idempotencyStrategy: 'custom', idempotencyKey: idempotencyValue },
 				},
 			],
 			httpRequest,
@@ -390,7 +390,7 @@ describe('Aidenix node — idempotency key strategies', () => {
 
 		await run(ctx);
 
-		expect(httpRequest.mock.calls[0][0].headers['Idempotency-Key']).toBe(customKey);
+		expect(httpRequest.mock.calls[0][0].headers['Idempotency-Key']).toBe(idempotencyValue);
 	});
 
 	it('throws NodeOperationError if strategy is "custom" but key is empty', async () => {

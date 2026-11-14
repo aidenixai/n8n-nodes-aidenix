@@ -1,7 +1,7 @@
 {
 	"name": "n8n-nodes-aidenix",
-	"version": "0.4.0",
-	"description": "Aidenix node for n8n — score a contact or a whole list against your ICP and write personalized outreach, check whether addresses are still worth contacting, profile the person and the company behind the lead, and manage ICP profiles, quota and opt-outs.",
+	"version": "0.5.0",
+	"description": "Aidenix node for n8n — B2B data on people and companies: find people with work emails and phones, check whether an address is still worth sending to, company and career signals, and ICP lead scoring with a drafted first message.",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
@@ -13,6 +13,9 @@
 		"lead-qualification",
 		"email-verification",
 		"signals",
+		"b2b-data",
+		"people-search",
+		"enrichment",
 		"prospecting"
 	],
 	"license": "MIT",
