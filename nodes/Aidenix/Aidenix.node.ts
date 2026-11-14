@@ -34,8 +34,8 @@ export class Aidenix implements INodeType {
 		icon: 'file:aidenix.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{ $parameter["operation"] }}',
-		description: 'Evaluate business fit and generate outreach with Aidenix AI',
+		subtitle: '={{ $parameter["resource"] + ": " + $parameter["operation"] }}',
+		description: 'Find people and companies, check whether an email is still worth sending to, and score leads against your ICP',
 		defaults: {
 			name: 'Aidenix',
 		},
@@ -50,17 +50,111 @@ export class Aidenix implements INodeType {
 		],
 		properties: [
 			{
+				displayName: 'Resource',
+				name: 'resource',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{ name: 'Account', value: 'account' },
+					{ name: 'Company', value: 'company' },
+					{ name: 'Email', value: 'email' },
+					{ name: 'Fit Scoring', value: 'fit' },
+					{ name: 'Person', value: 'person' },
+				],
+				default: 'fit',
+			},
+			{
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
 				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['person'],
+					},
+				},
 				options: [
 					{
-						name: 'Account Context',
-						value: 'accountContext',
-						description: 'Plan, quota left, and which ICP profile scores are weighted against',
-						action: 'Get account context',
+						name: 'Person Search',
+						value: 'personSearch',
+						description:
+							'People by role, company and timing filters, with emails and phones. One request per person returned.',
+						action: 'Find people by filters',
 					},
+					{
+						name: 'Person Signals',
+						value: 'personSignals',
+						description: 'Who the person is, what they publish, where they are in their career',
+						action: 'Profile a person',
+					},
+				],
+				default: 'personSearch',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['company'],
+					},
+				},
+				options: [
+					{
+						name: 'Company People',
+						value: 'companyPeople',
+						description:
+							'The team of a company with the work addresses to reach them, ranked by who decides. Admin accounts only.',
+						action: 'Get the people of a company',
+					},
+					{
+						name: 'Company Signals',
+						value: 'companySignals',
+						description: 'The company moment behind the lead — momentum, signals, timing',
+						action: 'Profile a company',
+					},
+				],
+				default: 'companySignals',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['email'],
+					},
+				},
+				options: [
+					{
+						name: 'Email Intel',
+						value: 'emailIntel',
+						description:
+							'Check whether an address is worth contacting — mailbox alive, person still there',
+						action: 'Assess an email address',
+					},
+					{
+						name: 'Email Intel (Bulk)',
+						value: 'emailIntelBulk',
+						description: 'The same address check across a whole list, in one call',
+						action: 'Assess a list of addresses',
+					},
+				],
+				default: 'emailIntel',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['fit'],
+					},
+				},
+				options: [
 					{
 						name: 'Batch Results',
 						value: 'batchResults',
@@ -87,55 +181,10 @@ export class Aidenix implements INodeType {
 						action: 'Evaluate business fit for a contact',
 					},
 					{
-						name: 'Company People',
-						value: 'companyPeople',
-						description:
-							'The team of a company with the work addresses to reach them, ranked by who decides. Admin accounts only.',
-						action: 'Get the people of a company',
-					},
-					{
-						name: 'Company Signals',
-						value: 'companySignals',
-						description: 'The company moment behind the lead — momentum, signals, timing',
-						action: 'Profile a company',
-					},
-					{
-						name: 'Email Intel',
-						value: 'emailIntel',
-						description:
-							'Check whether an address is worth contacting — mailbox alive, person still there',
-						action: 'Assess an email address',
-					},
-					{
-						name: 'Email Intel (Bulk)',
-						value: 'emailIntelBulk',
-						description: 'The same address check across a whole list, in one call',
-						action: 'Assess a list of addresses',
-					},
-					{
 						name: 'ICP Profiles',
 						value: 'icpProfiles',
 						description: 'The saved ICP profiles and which one is active',
 						action: 'List ICP profiles',
-					},
-					{
-						name: 'Person Search',
-						value: 'personSearch',
-						description:
-							'People by role, company and timing filters, with emails and phones. One request per person returned.',
-						action: 'Find people by filters',
-					},
-					{
-						name: 'Person Signals',
-						value: 'personSignals',
-						description: 'Who the person is, what they publish, where they are in their career',
-						action: 'Profile a person',
-					},
-					{
-						name: 'Record Opt-Out',
-						value: 'optOut',
-						description: 'Record that a contact asked to be left alone',
-						action: 'Record an opt out',
 					},
 					{
 						name: 'Score a List',
@@ -145,6 +194,32 @@ export class Aidenix implements INodeType {
 					},
 				],
 				default: 'businessFit',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['account'],
+					},
+				},
+				options: [
+					{
+						name: 'Account Context',
+						value: 'accountContext',
+						description: 'Plan, quota left, and which ICP profile scores are weighted against',
+						action: 'Get account context',
+					},
+					{
+						name: 'Record Opt-Out',
+						value: 'optOut',
+						description: 'Record that a contact asked to be left alone',
+						action: 'Record an opt out',
+					},
+				],
+				default: 'accountContext',
 			},
 			{
 				displayName: 'Query',
@@ -714,7 +789,8 @@ export class Aidenix implements INodeType {
 						options.maxRetries ?? 10,
 						options.retryDelayMs ?? 5000,
 					);
-					results.push({ json: response as IDataObject, pairedItem: { item: i } });
+					if (!response.ok) throw new NodeApiError(this.getNode(), response.error as JsonObject, { itemIndex: i });
+					results.push({ json: response.value as IDataObject, pairedItem: { item: i } });
 				} catch (error) {
 					if (this.continueOnFail()) {
 						results.push({
@@ -801,9 +877,10 @@ export class Aidenix implements INodeType {
 					maxRetries,
 					retryDelayMs,
 				);
+				if (!response.ok) throw new NodeApiError(this.getNode(), response.error as JsonObject, { itemIndex: i });
 
 				results.push({
-					json: response as IDataObject,
+					json: response.value as IDataObject,
 					pairedItem: { item: i },
 				});
 			} catch (error) {
@@ -839,22 +916,22 @@ function flagsToQuery(flags: Record<string, boolean>): string {
 	return on.length ? `?${on.join('&')}` : '';
 }
 
+// Повтор на 429/5xx. Ошибку не бросает, а возвращает: вызывающий оборачивает её в NodeApiError.
 async function callWithRetry<T>(
 	fn: () => Promise<T>,
 	maxRetries: number,
 	delayMs: number,
-): Promise<T> {
+): Promise<{ ok: true; value: T } | { ok: false; error: unknown }> {
 	for (let attempt = 0; ; attempt++) {
 		try {
-			return await fn();
+			return { ok: true, value: await fn() };
 		} catch (error) {
 			const status = extractStatusCode(error);
 			if (status !== undefined && RETRYABLE_STATUSES.has(status) && attempt < maxRetries) {
 				await sleep(delayMs);
 				continue;
 			}
-			// eslint-disable-next-line @n8n/community-nodes/require-node-api-error -- internal retry helper; caller wraps as NodeApiError
-			throw error;
+			return { ok: false, error };
 		}
 	}
 }
