@@ -84,7 +84,7 @@ export class Aidenix implements INodeType {
 					{
 						name: 'Person Signals',
 						value: 'personSignals',
-						description: 'Who the person is, what they publish, where they are in their career',
+						description: 'Who the person is, what they publish on LinkedIn and X, where they are in their career',
 						action: 'Profile a person',
 					},
 				],
@@ -111,7 +111,8 @@ export class Aidenix implements INodeType {
 					{
 						name: 'Company Signals',
 						value: 'companySignals',
-						description: 'The company moment behind the lead — momentum, signals, timing',
+						description:
+							'The company moment behind the lead — momentum, signals, open jobs, US visas, FDA clearances, X account, timing',
 						action: 'Profile a company',
 					},
 				],
@@ -400,7 +401,7 @@ export class Aidenix implements INodeType {
 					'{\n  "titles": ["vp sales"],\n  "countries": ["United States"],\n  "new_in_role_days": 90\n}',
 				required: true,
 				description:
-					'Combined with AND; values inside one list with OR. Keys: titles, levels, departments, decision_makers, countries, states, cities, skills, programming_languages, industries, company_size_min, company_size_max, company_countries, technologies, company_hiring, funded_since, founded_after, domains, companies, exclude_domains, new_in_role_days, past_companies, overdue_only, likes_posts_of, engages_with_topics.',
+					'Combined with AND; values inside one list with OR. Keys: titles, levels, departments, decision_makers, countries, states, cities, skills, programming_languages, industries, company_size_min, company_size_max, company_countries, technologies, company_hiring, funded_since, visa_since, visa_roles, fda_cleared_since, fda_specialties, founded_after, domains, companies, exclude_domains, new_in_role_days, past_companies, overdue_only, likes_posts_of, engages_with_topics.',
 				displayOptions: {
 					show: {
 						operation: ['personSearch'],
